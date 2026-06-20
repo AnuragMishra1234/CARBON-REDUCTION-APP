@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Carbon — AI Carbon Footprint Awareness Platform</title>
+  <meta name="description" content="Track your lifestyle impact, discover personalized actions, and make sustainable choices with real-world measurable results powered by AI."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #00ff88;
+      --green-dim: #00c96a;
+      --cyan: #00d4ff;
+      --blue: #0066ff;
+      --purple: #7c3aed;
+      --dark: #020810;
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.10);
+      --glass-hover: rgba(255,255,255,0.08);
+      --text: rgba(255,255,255,0.95);
+      --text-dim: rgba(255,255,255,0.55);
+      --glow-green: 0 0 40px rgba(0,255,136,0.4);
+      --glow-cyan: 0 0 40px rgba(0,212,255,0.4);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* === CURSOR === */
+    #cursor {
+      position: fixed; width: 12px; height: 12px;
+      background: var(--green); border-radius: 50%;
+      pointer-events: none; z-index: 99999;
+      transform: translate(-50%,-50%);
+      transition: transform 0.1s, width 0.3s, height 0.3s, opacity 0.3s;
+      mix-blend-mode: screen;
+    }
+    #cursor-ring {
+      position: fixed; width: 40px; height: 40px;
+      border: 1px solid rgba(0,255,136,0.5);
+      border-radius: 50%; pointer-events: none; z-index: 99998;
+      transform: translate(-50%,-50%);
+      transition: transform 0.15s ease-out, width 0.3s, height 0.3s;
+    }
+
+    /* === THREE.JS CANVAS === */
+    #bg-canvas {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; z-index: 0;
+      pointer-events: none;
+    }
+
+    /* === BUTTERFLY CANVAS === */
+    #butterfly-canvas {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; z-index: 1;
+      pointer-events: none;
+    }
+
+    /* === NAV === */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 1000;
+      padding: 20px 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(2,8,16,0.3);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.4rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .nav-logo span { font-weight: 300; }
+    .nav-links { display: flex; gap: 40px; list-style: none; }
+    .nav-links a {
+      color: var(--text-dim); text-decoration: none;
+      font-size: 0.85rem; font-weight: 500; letter-spacing: 0.5px;
+      transition: color 0.3s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0;
+      width: 0; height: 1px;
+      background: var(--green); transition: width 0.3s;
+    }
+    .nav-links a:hover { color: var(--green); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      color: #000 !important; -webkit-text-fill-color: #000 !important;
+      padding: 10px 24px; border-radius: 100px;
+      font-weight: 700 !important;
+      transition: box-shadow 0.3s, transform 0.3s !important;
+    }
+    .nav-cta:hover {
+      box-shadow: var(--glow-green);
+      transform: translateY(-2px) !important;
+    }
+    .nav-cta::after { display: none !important; }
+
+    /* === MAIN SCROLL CONTAINER === */
+    main { position: relative; z-index: 10; }
+
+    /* === SECTION BASE === */
+    section {
+      position: relative; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 120px 60px;
+    }
+
+    /* === GLASS CARD === */
+    .glass-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 24px;
+      transition: transform 0.4s cubic-bezier(0.23,1,0.32,1),
+                  box-shadow 0.4s, border-color 0.4s, background 0.4s;
+    }
+    .glass-card:hover {
+      transform: translateY(-8px) scale(1.01);
+      background: var(--glass-hover);
+      border-color: rgba(0,255,136,0.25);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5), var(--glow-green);
+    }
+
+    /* === GLOW TEXT === */
+    .glow-text {
+      background: linear-gradient(135deg, var(--green) 0%, var(--cyan) 50%, #a78bfa 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .label-tag {
+      display: inline-block;
+      background: rgba(0,255,136,0.1);
+      border: 1px solid rgba(0,255,136,0.3);
+      color: var(--green); font-size: 0.75rem;
+      font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 100px;
+      margin-bottom: 20px;
+    }
+
+    /* ========================================
+       HERO SECTION
+    ======================================== */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding-top: 100px;
+      overflow: hidden;
+    }
+
+    .hero-inner { position: relative; z-index: 2; max-width: 900px; }
+
+    /* Holographic Earth */
+    .earth-container {
+      position: relative;
+      width: 380px; height: 380px;
+      margin: 0 auto 60px;
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-18px) rotate(1deg); }
+      66% { transform: translateY(-8px) rotate(-1deg); }
+    }
+    .earth-core {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 35% 35%,
+        rgba(0,255,136,0.9) 0%,
+        rgba(0,180,80,0.7) 20%,
+        rgba(0,100,200,0.8) 45%,
+        rgba(0,50,150,0.9) 70%,
+        rgba(5,20,60,1) 100%
+      );
+      box-shadow:
+        0 0 60px rgba(0,255,136,0.6),
+        0 0 120px rgba(0,200,100,0.3),
+        inset 0 0 80px rgba(0,100,255,0.3);
+    }
+    .earth-ring {
+      position: absolute; inset: -20px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,255,136,0.15);
+      animation: ringPulse 3s ease-in-out infinite;
+    }
+    .earth-ring:nth-child(2) { inset: -40px; border-color: rgba(0,212,255,0.1); animation-delay: -1s; }
+    .earth-ring:nth-child(3) { inset: -65px; border-color: rgba(0,255,136,0.06); animation-delay: -2s; }
+    @keyframes ringPulse {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+    .earth-particles {
+      position: absolute; inset: -80px;
+      border-radius: 50%;
+    }
+    .earth-particles::before, .earth-particles::after {
+      content: ''; position: absolute; inset: 30px;
+      border-radius: 50%;
+      border: 1px dashed rgba(0,255,136,0.2);
+      animation: orbitSpin 8s linear infinite;
+    }
+    .earth-particles::after {
+      inset: 10px;
+      border-color: rgba(0,212,255,0.15);
+      animation-direction: reverse; animation-duration: 12s;
+    }
+    @keyframes orbitSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .earth-badge {
+      position: absolute;
+      background: rgba(0,255,136,0.1);
+      border: 1px solid rgba(0,255,136,0.3);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 0.75rem; font-weight: 600;
+      white-space: nowrap;
+      animation: float 4s ease-in-out infinite;
+    }
+    .earth-badge:nth-child(5) { top: 10%; left: -130px; animation-delay: -0.5s; color: var(--green); border-color: rgba(0,255,136,0.4); }
+    .earth-badge:nth-child(6) { top: 10%; right: -140px; animation-delay: -1.5s; color: var(--cyan); border-color: rgba(0,212,255,0.4); }
+    .earth-badge:nth-child(7) { bottom: 20%; left: -120px; animation-delay: -2.5s; color: #a78bfa; border-color: rgba(167,139,250,0.4); }
+    .earth-badge:nth-child(8) { bottom: 20%; right: -120px; animation-delay: -3.5s; color: #f59e0b; border-color: rgba(245,158,11,0.4); }
+
+    .hero-label { animation-delay: 0.2s; }
+    .hero-h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.8rem, 6vw, 5.5rem);
+      font-weight: 800; line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+    }
+    .hero-sub {
+      font-size: 1.15rem; color: var(--text-dim);
+      line-height: 1.7; max-width: 620px;
+      margin: 0 auto 40px;
+    }
+    .hero-ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      color: #000; font-weight: 700; font-size: 1rem;
+      padding: 16px 36px; border-radius: 100px; border: none;
+      cursor: pointer; transition: all 0.3s;
+      box-shadow: 0 0 30px rgba(0,255,136,0.3);
+      letter-spacing: 0.3px;
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 60px rgba(0,255,136,0.6);
+    }
+    .btn-secondary {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--text); font-weight: 600; font-size: 1rem;
+      padding: 16px 36px; border-radius: 100px;
+      cursor: pointer; transition: all 0.3s;
+      backdrop-filter: blur(12px);
+    }
+    .btn-secondary:hover {
+      border-color: rgba(0,255,136,0.4);
+      color: var(--green);
+      transform: translateY(-3px);
+    }
+
+    /* Floating stats row */
+    .hero-stats {
+      display: flex; gap: 20px; justify-content: center;
+      flex-wrap: wrap; margin-top: 60px;
+    }
+    .hero-stat-card {
+      padding: 20px 28px;
+      text-align: center;
+      min-width: 140px;
+      animation: float 5s ease-in-out infinite;
+    }
+    .hero-stat-card:nth-child(1) { animation-delay: 0s; }
+    .hero-stat-card:nth-child(2) { animation-delay: -1.2s; }
+    .hero-stat-card:nth-child(3) { animation-delay: -2.4s; }
+    .hero-stat-card:nth-child(4) { animation-delay: -3.6s; }
+    .hero-stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem; font-weight: 700;
+    }
+    .hero-stat-label {
+      font-size: 0.72rem; color: var(--text-dim);
+      letter-spacing: 1px; text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute; bottom: 40px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      color: var(--text-dim); font-size: 0.75rem;
+      letter-spacing: 2px; text-transform: uppercase;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    .scroll-indicator::after {
+      content: ''; width: 1px; height: 50px;
+      background: linear-gradient(to bottom, rgba(0,255,136,0.6), transparent);
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ========================================
+       SECTION DIVIDERS — atmospheric spacer
+    ======================================== */
+    .space-divider {
+      height: 80px;
+      background: transparent;
+      position: relative;
+    }
+
+    /* ========================================
+       FEATURES SECTION
+    ======================================== */
+    #features { flex-direction: column; gap: 60px; }
+    .section-header { text-align: center; max-width: 700px; }
+    .section-h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 700; line-height: 1.1;
+      letter-spacing: -1.5px; margin-bottom: 16px;
+    }
+    .section-sub { color: var(--text-dim); font-size: 1rem; line-height: 1.7; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px; width: 100%; max-width: 1200px;
+    }
+    .feature-card {
+      padding: 40px 32px;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg,
+        transparent, var(--green), transparent);
+      opacity: 0; transition: opacity 0.4s;
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; margin-bottom: 20px;
+      background: rgba(0,255,136,0.08);
+      border: 1px solid rgba(0,255,136,0.15);
+      transition: all 0.3s;
+    }
+    .feature-card:hover .feature-icon {
+      background: rgba(0,255,136,0.15);
+      box-shadow: 0 0 30px rgba(0,255,136,0.3);
+    }
+    .feature-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.1rem; font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .feature-desc { color: var(--text-dim); font-size: 0.9rem; line-height: 1.65; }
+
+    /* Energy bridge line between cards */
+    .energy-bridge {
+      position: absolute; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0,255,136,0.4), transparent);
+      animation: bridgePulse 3s ease-in-out infinite;
+    }
+    @keyframes bridgePulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* ========================================
+       HOW IT WORKS
+    ======================================== */
+    #how { flex-direction: column; gap: 60px; }
+    .steps-container {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 0; width: 100%; max-width: 1100px;
+      position: relative;
+    }
+    .steps-container::before {
+      content: ''; position: absolute;
+      top: 60px; left: 16.67%; right: 16.67%; height: 2px;
+      background: linear-gradient(90deg,
+        rgba(0,255,136,0.8), rgba(0,212,255,0.8), rgba(0,255,136,0.8));
+      animation: bridgePulse 2s ease-in-out infinite;
+      z-index: 1;
+    }
+    .step-card {
+      padding: 50px 40px;
+      text-align: center;
+      position: relative;
+      animation: float 6s ease-in-out infinite;
+    }
+    .step-card:nth-child(1) { animation-delay: 0s; }
+    .step-card:nth-child(2) { animation-delay: -2s; margin-top: 30px; }
+    .step-card:nth-child(3) { animation-delay: -4s; }
+    .step-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 4rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1; margin-bottom: 4px;
+    }
+    .step-label {
+      font-size: 0.7rem; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--green);
+      margin-bottom: 16px; font-weight: 600;
+    }
+    .step-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem; font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .step-desc { color: var(--text-dim); font-size: 0.9rem; line-height: 1.65; }
+
+    /* ========================================
+       AI CARBON COACH
+    ======================================== */
+    #ai-coach {
+      gap: 80px;
+      flex-direction: row; flex-wrap: wrap;
+      justify-content: center;
+    }
+    .ai-content { max-width: 480px; }
+    .ai-h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 700; line-height: 1.1;
+      letter-spacing: -1.5px; margin-bottom: 16px;
+    }
+    .ai-desc { color: var(--text-dim); font-size: 1rem; line-height: 1.7; margin-bottom: 32px; }
+    .ai-features { display: flex; flex-direction: column; gap: 14px; }
+    .ai-feature-item {
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .ai-feature-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      margin-top: 6px; flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(0,255,136,0.6);
+    }
+    .ai-feature-text { color: var(--text-dim); font-size: 0.9rem; line-height: 1.5; }
+    .ai-feature-text strong { color: var(--text); font-weight: 600; }
+
+    /* Chat interface */
+    .ai-chat {
+      width: 380px; padding: 32px;
+      flex-shrink: 0;
+      animation: float 5s ease-in-out infinite;
+    }
+    .chat-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .chat-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      box-shadow: 0 0 20px rgba(0,255,136,0.4);
+    }
+    .chat-name { font-weight: 600; font-size: 0.95rem; }
+    .chat-status {
+      font-size: 0.72rem; color: var(--green);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .chat-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      animation: chatDotPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes chatDotPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .chat-messages { display: flex; flex-direction: column; gap: 16px; }
+    .chat-msg {
+      max-width: 85%; padding: 12px 16px;
+      border-radius: 16px; font-size: 0.85rem; line-height: 1.5;
+      animation: msgSlide 0.4s ease-out;
+    }
+    @keyframes msgSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .chat-msg.user {
+      align-self: flex-end;
+      background: rgba(0,255,136,0.12);
+      border: 1px solid rgba(0,255,136,0.25);
+      border-bottom-right-radius: 4px;
+      color: var(--text);
+    }
+    .chat-msg.ai {
+      align-self: flex-start;
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-bottom-left-radius: 4px;
+      color: var(--text);
+    }
+    .chat-msg.ai .ai-tag {
+      font-size: 0.65rem; color: var(--cyan);
+      font-weight: 600; letter-spacing: 1px;
+      margin-bottom: 4px; text-transform: uppercase;
+    }
+    .chat-input-row {
+      display: flex; gap: 10px; margin-top: 20px;
+      padding-top: 20px; border-top: 1px solid var(--glass-border);
+    }
+    .chat-input {
+      flex: 1; background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 100px; padding: 10px 16px;
+      color: var(--text); font-size: 0.82rem;
+      outline: none; font-family: 'Inter', sans-serif;
+    }
+    .chat-input::placeholder { color: var(--text-dim); }
+    .chat-send {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; color: #000;
+      transition: box-shadow 0.3s, transform 0.3s;
+    }
+    .chat-send:hover {
+      box-shadow: 0 0 20px rgba(0,255,136,0.5);
+      transform: scale(1.1);
+    }
+
+    /* ========================================
+       IMPACT TRANSLATOR
+    ======================================== */
+    #impact { flex-direction: column; gap: 60px; }
+    .impact-ring-container {
+      position: relative; width: 100%; max-width: 900px;
+    }
+    .impact-cards-orbit {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .impact-card {
+      padding: 40px 32px; text-align: center;
+      animation: float 6s ease-in-out infinite;
+    }
+    .impact-card:nth-child(1) { animation-delay: 0s; }
+    .impact-card:nth-child(2) { animation-delay: -2s; margin-top: 40px; }
+    .impact-card:nth-child(3) { animation-delay: -4s; }
+    .impact-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem; font-weight: 800;
+    }
+    .impact-unit { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; margin-bottom: 16px; }
+    .impact-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+      margin: 16px 0;
+    }
+    .impact-equiv { font-size: 1rem; font-weight: 500; color: var(--text-dim); }
+    .impact-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+    /* ========================================
+       STATISTICS SECTION
+    ======================================== */
+    #stats {
+      background: radial-gradient(ellipse at center,
+        rgba(0,255,136,0.04) 0%, transparent 70%);
+    }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 32px; width: 100%; max-width: 1100px;
+    }
+    .stat-pillar {
+      text-align: center; padding: 50px 30px;
+      position: relative; overflow: hidden;
+      animation: float 7s ease-in-out infinite;
+    }
+    .stat-pillar:nth-child(1) { animation-delay: 0s; }
+    .stat-pillar:nth-child(2) { animation-delay: -1.75s; margin-top: 20px; }
+    .stat-pillar:nth-child(3) { animation-delay: -3.5s; }
+    .stat-pillar:nth-child(4) { animation-delay: -5.25s; margin-top: 20px; }
+    .stat-pillar::before {
+      content: ''; position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 2px; height: 0;
+      background: linear-gradient(to top, var(--green), transparent);
+      animation: pillarGrow 2s ease-out forwards;
+    }
+    @keyframes pillarGrow {
+      to { height: 60%; }
+    }
+    .stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 3rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px; line-height: 1;
+    }
+    .stat-label {
+      color: var(--text-dim); font-size: 0.85rem;
+      font-weight: 500; letter-spacing: 0.5px;
+    }
+    .stat-glow {
+      position: absolute; top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 80px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+    }
+
+    /* ========================================
+       CHALLENGES
+    ======================================== */
+    #challenges { flex-direction: column; gap: 60px; }
+    .challenges-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 24px; width: 100%; max-width: 900px;
+    }
+    .challenge-card {
+      padding: 36px 32px; position: relative;
+      overflow: hidden; cursor: pointer;
+      animation: float 5s ease-in-out infinite;
+    }
+    .challenge-card:nth-child(1) { animation-delay: 0s; }
+    .challenge-card:nth-child(2) { animation-delay: -1.2s; }
+    .challenge-card:nth-child(3) { animation-delay: -2.4s; }
+    .challenge-card:nth-child(4) { animation-delay: -3.6s; }
+    .challenge-tag {
+      display: inline-block;
+      background: rgba(0,255,136,0.1);
+      border: 1px solid rgba(0,255,136,0.2);
+      color: var(--green); font-size: 0.68rem;
+      font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 4px 12px; border-radius: 100px;
+      margin-bottom: 14px;
+    }
+    .challenge-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.15rem; font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .challenge-desc { color: var(--text-dim); font-size: 0.88rem; line-height: 1.6; margin-bottom: 20px; }
+    .challenge-progress {
+      height: 4px; background: rgba(255,255,255,0.06);
+      border-radius: 100px; overflow: hidden;
+    }
+    .challenge-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      border-radius: 100px;
+      box-shadow: 0 0 10px rgba(0,255,136,0.5);
+      animation: barGrow 2s ease-out forwards;
+      transform-origin: left;
+    }
+    @keyframes barGrow { from { width: 0; } }
+    .challenge-join {
+      margin-top: 16px;
+      background: transparent;
+      border: 1px solid rgba(0,255,136,0.3);
+      color: var(--green);
+      padding: 8px 20px; border-radius: 100px;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      transition: all 0.3s;
+    }
+    .challenge-join:hover {
+      background: rgba(0,255,136,0.1);
+      box-shadow: 0 0 20px rgba(0,255,136,0.3);
+    }
+
+    /* ========================================
+       TESTIMONIALS
+    ======================================== */
+    #testimonials { flex-direction: column; gap: 50px; }
+    .testimonials-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px; width: 100%; max-width: 1100px;
+    }
+    .testimonial-card {
+      padding: 36px 28px;
+      animation: float 6s ease-in-out infinite;
+    }
+    .testimonial-card:nth-child(1) { animation-delay: 0s; }
+    .testimonial-card:nth-child(2) { animation-delay: -2s; margin-top: 30px; }
+    .testimonial-card:nth-child(3) { animation-delay: -4s; }
+    .quote-mark {
+      font-size: 3rem; line-height: 1;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 16px; font-family: Georgia, serif;
+    }
+    .testimonial-text {
+      color: var(--text-dim); font-size: 0.95rem;
+      line-height: 1.7; margin-bottom: 24px; font-style: italic;
+    }
+    .testimonial-author {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .author-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 700;
+      background: linear-gradient(135deg, rgba(0,255,136,0.2), rgba(0,212,255,0.2));
+      border: 1px solid rgba(0,255,136,0.2);
+      color: var(--green);
+    }
+    .author-name { font-weight: 600; font-size: 0.88rem; }
+    .author-title { font-size: 0.75rem; color: var(--text-dim); }
+    .stars { color: #f59e0b; font-size: 0.8rem; margin-bottom: 14px; }
+
+    /* ========================================
+       COMMUNITY
+    ======================================== */
+    #community {
+      flex-direction: column; gap: 60px;
+      position: relative;
+      background: radial-gradient(ellipse at 50% 30%,
+        rgba(0,255,136,0.04) 0%, transparent 60%);
+    }
+    .community-content { max-width: 600px; text-align: center; }
+    .community-nodes {
+      position: relative; width: 100%; max-width: 800px;
+      height: 300px;
+    }
+    .node {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(0,255,136,0.8), rgba(0,100,200,0.6));
+      box-shadow: 0 0 20px rgba(0,255,136,0.4);
+      animation: nodeFloat linear infinite;
+    }
+    @keyframes nodeFloat {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(20px, -15px); }
+      50% { transform: translate(-10px, -25px); }
+      75% { transform: translate(-20px, -5px); }
+      100% { transform: translate(0, 0); }
+    }
+    .community-features {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 20px; width: 100%; max-width: 700px;
+    }
+    .comm-feat {
+      display: flex; gap: 16px; align-items: flex-start;
+      padding: 24px; border-radius: 16px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      transition: all 0.3s;
+    }
+    .comm-feat:hover {
+      border-color: rgba(0,255,136,0.25);
+      background: var(--glass-hover);
+    }
+    .comm-feat-icon {
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .comm-feat-text strong {
+      display: block; font-size: 0.9rem;
+      font-weight: 600; margin-bottom: 4px;
+    }
+    .comm-feat-text span {
+      font-size: 0.82rem; color: var(--text-dim);
+    }
+
+    /* ========================================
+       FOOTER
+    ======================================== */
+    footer {
+      position: relative;
+      padding: 100px 60px 60px;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 0%,
+        rgba(0,255,136,0.05) 0%, transparent 60%);
+      border-top: 1px solid var(--glass-border);
+    }
+    .footer-monument {
+      margin-bottom: 60px;
+    }
+    .footer-h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800; line-height: 1.05;
+      letter-spacing: -2px; margin-bottom: 24px;
+    }
+    .footer-ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
+    .footer-links {
+      display: flex; gap: 40px; justify-content: center;
+      flex-wrap: wrap; margin-bottom: 40px;
+    }
+    .footer-links a {
+      color: var(--text-dim); text-decoration: none;
+      font-size: 0.85rem; transition: color 0.3s;
+    }
+    .footer-links a:hover { color: var(--green); }
+    .footer-bottom {
+      color: var(--text-dim); font-size: 0.8rem;
+      padding-top: 30px; border-top: 1px solid var(--glass-border);
+    }
+    .footer-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem; font-weight: 800; letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+
+    /* ========================================
+       PARTICLES OVERLAY (ambient)
+    ======================================== */
+    .particle-field {
+      position: fixed; inset: 0; z-index: 2;
+      pointer-events: none; overflow: hidden;
+    }
+    .ambient-particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: particleDrift linear infinite;
+    }
+    @keyframes particleDrift {
+      0% { transform: translate(0, 0) scale(1); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+    }
+
+    /* ========================================
+       SECTION REVEAL ANIMATIONS
+    ======================================== */
+    .reveal {
+      opacity: 0; transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.23,1,0.32,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+    .reveal-delay-6 { transition-delay: 0.6s; }
+
+    /* ========================================
+       RESPONSIVE
+    ======================================== */
+    @media (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps-container { grid-template-columns: 1fr; }
+      .steps-container::before { display: none; }
+      .step-card { margin-top: 0 !important; }
+      nav { padding: 20px 30px; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 768px) {
+      section { padding: 100px 24px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .challenges-grid { grid-template-columns: 1fr; }
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .community-features { grid-template-columns: 1fr; }
+      .impact-cards-orbit { grid-template-columns: 1fr; }
+      .ai-coach { flex-direction: column; }
+      .ai-chat { width: 100%; }
+      .earth-container { width: 260px; height: 260px; }
+      .hero-stats { gap: 12px; }
+      .hero-stat-card { min-width: 120px; }
+      .earth-badge { display: none; }
+      footer { padding: 80px 24px 40px; }
+      .footer-links { gap: 20px; }
+    }
+
+    /* === GOD RAYS === */
+    .god-ray {
+      position: fixed; top: -20%;
+      width: 2px; height: 140%;
+      background: linear-gradient(to bottom,
+        transparent, rgba(0,255,136,0.06), transparent);
+      pointer-events: none; z-index: 1;
+      animation: rayFloat 8s ease-in-out infinite;
+    }
+    @keyframes rayFloat {
+      0%, 100% { opacity: 0.3; transform: rotate(var(--r)) scaleX(1); }
+      50% { opacity: 0.7; transform: rotate(calc(var(--r) + 2deg)) scaleX(2); }
+    }
+
+    /* Loading overlay */
+    #loader {
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--dark);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      transition: opacity 0.8s, visibility 0.8s;
+    }
+    #loader.hidden { opacity: 0; visibility: hidden; }
+    .loader-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 30px; animation: logoPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes logoPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .loader-bar {
+      width: 200px; height: 2px;
+      background: rgba(255,255,255,0.1); border-radius: 100px; overflow: hidden;
+    }
+    .loader-progress {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      animation: loadProgress 2s ease-in-out forwards;
+    }
+    @keyframes loadProgress { from { width: 0; } to { width: 100%; } }
+  </style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loader">
+  <div class="loader-logo">◈ CARBON</div>
+  <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;">Initializing Universe</div>
+  <div class="loader-bar"><div class="loader-progress"></div></div>
+</div>
+
+<!-- CUSTOM CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- GOD RAYS -->
+<div class="god-ray" style="left:10%;--r:-15deg"></div>
+<div class="god-ray" style="left:25%;--r:-8deg;animation-delay:-2s"></div>
+<div class="god-ray" style="left:40%;--r:0deg;animation-delay:-4s"></div>
+<div class="god-ray" style="left:60%;--r:5deg;animation-delay:-1s"></div>
+<div class="god-ray" style="left:75%;--r:12deg;animation-delay:-3s"></div>
+<div class="god-ray" style="left:90%;--r:18deg;animation-delay:-5s"></div>
+
+<!-- THREE.JS BACKGROUND -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- BUTTERFLY CANVAS -->
+<canvas id="butterfly-canvas"></canvas>
+
+<!-- AMBIENT PARTICLES -->
+<div class="particle-field" id="particle-field"></div>
+
+<!-- NAVIGATION -->
+<nav>
+  <div class="nav-logo">◈ CARBON<span>ai</span></div>
+  <ul class="nav-links">
+    <li><a href="#hero" id="nav-home">Home</a></li>
+    <li><a href="#features" id="nav-calculator">Calculator</a></li>
+    <li><a href="#ai-coach" id="nav-coach">AI Coach</a></li>
+    <li><a href="#challenges" id="nav-challenges">Challenges</a></li>
+    <li><a href="#community" id="nav-community">Community</a></li>
+    <li><a href="#about" id="nav-about">About</a></li>
+    <li><a href="dashboard.html" class="nav-cta" id="nav-cta">Open Dashboard →</a></li>
+  </ul>
+  <button class="btn-primary" style="display:none" id="mobile-cta">Start Free</button>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main>
+
+  <!-- ===== HERO ===== -->
+  <section id="hero">
+    <div class="hero-inner">
+      <!-- Holographic Earth -->
+      <div class="earth-container reveal">
+        <div class="earth-ring"></div>
+        <div class="earth-ring"></div>
+        <div class="earth-ring"></div>
+        <div class="earth-core" id="earth-core"></div>
+        <div class="earth-particles"></div>
+        <div class="earth-badge">🌱 CO₂ Saved Today<br><strong style="color:var(--green)">2,847 kg</strong></div>
+        <div class="earth-badge">⚡ Eco Challenges<br><strong style="color:var(--cyan)">1,204 Active</strong></div>
+        <div class="earth-badge">🌍 Community<br><strong style="color:#a78bfa">25K+ Members</strong></div>
+        <div class="earth-badge">🤖 AI Insights<br><strong style="color:#f59e0b">Real-time</strong></div>
+      </div>
+
+      <div class="label-tag reveal reveal-delay-1">🌿 AI-Powered Sustainability Platform</div>
+      <h1 class="hero-h1 reveal reveal-delay-2">
+        <span class="glow-text">Understand</span> Your Carbon<br>
+        Footprint. <span class="glow-text">Reduce</span> It With AI.
+      </h1>
+      <p class="hero-sub reveal reveal-delay-3">
+        Track your lifestyle impact, discover personalized actions, and make sustainable
+        choices with real-world measurable results.
+      </p>
+      <div class="hero-ctas reveal reveal-delay-4">
+        <button class="btn-primary" id="hero-cta-primary" onclick="window.location.href='dashboard.html'">
+          🌱 Calculate My Footprint
+        </button>
+        <button class="btn-secondary" id="hero-cta-secondary" onclick="document.getElementById('impact').scrollIntoView({behavior:'smooth'})">
+          Explore Impact →
+        </button>
+      </div>
+
+      <!-- Floating stat cards -->
+      <div class="hero-stats reveal reveal-delay-5">
+        <div class="hero-stat-card glass-card">
+          <div class="hero-stat-num glow-text">500K+</div>
+          <div class="hero-stat-label">Activities Tracked</div>
+        </div>
+        <div class="hero-stat-card glass-card">
+          <div class="hero-stat-num" style="color:var(--cyan)">120T</div>
+          <div class="hero-stat-label">CO₂ Reduced</div>
+        </div>
+        <div class="hero-stat-card glass-card">
+          <div class="hero-stat-num" style="color:#a78bfa">98%</div>
+          <div class="hero-stat-label">Satisfaction Rate</div>
+        </div>
+        <div class="hero-stat-card glass-card">
+          <div class="hero-stat-num" style="color:#f59e0b">24/7</div>
+          <div class="hero-stat-label">AI Monitoring</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-indicator">Scroll</div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section id="features">
+    <div class="section-header reveal">
+      <div class="label-tag">◈ Platform Features</div>
+      <h2 class="section-h2">
+        Everything You Need To<br>
+        <span class="glow-text">Live Sustainably</span>
+      </h2>
+      <p class="section-sub">Floating crystal islands of intelligent sustainability tools, each independently designed for maximum impact.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card glass-card reveal reveal-delay-1">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">AI Carbon Coach</div>
+        <div class="feature-desc">Receive personalized sustainability guidance powered by intelligent carbon analysis tailored to your unique lifestyle.</div>
+      </div>
+      <div class="feature-card glass-card reveal reveal-delay-2">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Footprint Calculator</div>
+        <div class="feature-desc">Estimate your emissions across transport, food, energy, and daily activities with precision accuracy.</div>
+      </div>
+      <div class="feature-card glass-card reveal reveal-delay-3">
+        <div class="feature-icon">🔄</div>
+        <div class="feature-title">Impact Translator</div>
+        <div class="feature-desc">Convert complex CO₂ numbers into real-world equivalents everyone can understand and act upon.</div>
+      </div>
+      <div class="feature-card glass-card reveal reveal-delay-4">
+        <div class="feature-icon">🔥</div>
+        <div class="feature-title">Habit Tracker</div>
+        <div class="feature-desc">Build sustainable habits through intelligent streaks, achievable goals, and weekly challenges that stick.</div>
+      </div>
+      <div class="feature-card glass-card reveal reveal-delay-5">
+        <div class="feature-icon">🌐</div>
+        <div class="feature-title">Community Challenges</div>
+        <div class="feature-desc">Join thousands reducing emissions together through collaborative missions with real global impact.</div>
+      </div>
+      <div class="feature-card glass-card reveal reveal-delay-6">
+        <div class="feature-icon">📈</div>
+        <div class="feature-title">Progress Dashboard</div>
+        <div class="feature-desc">Visualize your carbon reduction journey with beautiful insights, analytics, and milestone celebrations.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section id="how">
+    <div class="section-header reveal">
+      <div class="label-tag">◈ How It Works</div>
+      <h2 class="section-h2">
+        Three Floating Platforms.<br>
+        <span class="glow-text">One Clear Path Forward.</span>
+      </h2>
+    </div>
+    <div class="steps-container">
+      <div class="step-card glass-card reveal reveal-delay-1">
+        <div class="step-num">01</div>
+        <div class="step-label">Step One</div>
+        <div class="step-title">Measure</div>
+        <div class="step-desc">Answer a few simple lifestyle questions about your transport, diet, energy use, and daily habits.</div>
+      </div>
+      <div class="step-card glass-card reveal reveal-delay-2">
+        <div class="step-num">02</div>
+        <div class="step-label">Step Two</div>
+        <div class="step-title">Understand</div>
+        <div class="step-desc">See exactly where your emissions come from and what they mean in real-world terms you can visualize.</div>
+      </div>
+      <div class="step-card glass-card reveal reveal-delay-3">
+        <div class="step-num">03</div>
+        <div class="step-label">Step Three</div>
+        <div class="step-title">Improve</div>
+        <div class="step-desc">Receive AI-generated action plans tailored specifically for your lifestyle, ranked by effort and impact.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== AI CARBON COACH ===== -->
+  <section id="ai-coach">
+    <div class="ai-content reveal">
+      <div class="label-tag">◈ AI Intelligence</div>
+      <h2 class="ai-h2">
+        Meet Your Personal<br>
+        <span class="glow-text">Carbon Coach</span>
+      </h2>
+      <p class="ai-desc">
+        Our AI analyzes your habits and provides personalized recommendations
+        ranked by effort, impact, and feasibility — making change feel achievable.
+      </p>
+      <div class="ai-features">
+        <div class="ai-feature-item">
+          <div class="ai-feature-dot"></div>
+          <div class="ai-feature-text"><strong>Personalized recommendations</strong> based on your unique lifestyle profile and carbon data.</div>
+        </div>
+        <div class="ai-feature-item">
+          <div class="ai-feature-dot" style="background:var(--cyan);box-shadow:0 0 10px rgba(0,212,255,0.6)"></div>
+          <div class="ai-feature-text"><strong>Real-time CO₂ savings</strong> calculated as you make changes to your habits and choices.</div>
+        </div>
+        <div class="ai-feature-item">
+          <div class="ai-feature-dot" style="background:#a78bfa;box-shadow:0 0 10px rgba(167,139,250,0.6)"></div>
+          <div class="ai-feature-text"><strong>Feasibility scoring</strong> so you always start with actions that fit your life and schedule.</div>
+        </div>
+        <div class="ai-feature-item">
+          <div class="ai-feature-dot" style="background:#f59e0b;box-shadow:0 0 10px rgba(245,158,11,0.6)"></div>
+          <div class="ai-feature-text"><strong>Progress memory</strong> that learns and adapts as your sustainable habits evolve over time.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="ai-chat glass-card reveal reveal-delay-2">
+      <div class="chat-header">
+        <div class="chat-avatar">🤖</div>
+        <div>
+          <div class="chat-name">Carbon AI Coach</div>
+          <div class="chat-status"><div class="chat-dot"></div>Online — Ready to help</div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-msg user">I drive 20 km every day.</div>
+        <div class="chat-msg ai">
+          <div class="ai-tag">Carbon AI</div>
+          Switching to public transport twice a week could save approximately <strong style="color:var(--green)">140 kg CO₂</strong> per year. That's equivalent to planting 7 trees! 🌱
+        </div>
+        <div class="chat-msg user">I eat meat four times a week.</div>
+        <div class="chat-msg ai">
+          <div class="ai-tag">Carbon AI</div>
+          Reducing one meat-based meal weekly could save around <strong style="color:var(--green)">80 kg CO₂</strong> annually. Plant-based proteins are a great starting point! 🥗
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-input" type="text" placeholder="Ask about your carbon footprint..." />
+        <button class="chat-send" id="chat-send-btn" onclick="sendChatMsg()">➤</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== IMPACT TRANSLATOR ===== -->
+  <section id="impact">
+    <div class="section-header reveal">
+      <div class="label-tag">◈ Impact Translator</div>
+      <h2 class="section-h2">
+        Turn Carbon Numbers Into<br>
+        <span class="glow-text">Real Understanding</span>
+      </h2>
+      <p class="section-sub">Massive holographic interface converting complex CO₂ data into real-world equivalents that inspire action.</p>
+    </div>
+    <div class="impact-ring-container">
+      <div class="impact-cards-orbit">
+        <div class="impact-card glass-card reveal reveal-delay-1">
+          <div class="impact-icon">🚗</div>
+          <div class="impact-num glow-text">10 kg</div>
+          <div class="impact-unit">of CO₂ equals</div>
+          <div class="impact-divider"></div>
+          <div class="impact-equiv">Driving <strong>50 km</strong><br>by car</div>
+        </div>
+        <div class="impact-card glass-card reveal reveal-delay-2">
+          <div class="impact-icon">📱</div>
+          <div class="impact-num" style="color:var(--cyan);font-family:'Space Grotesk',sans-serif;font-size:2.5rem;font-weight:800;">100 kg</div>
+          <div class="impact-unit">of CO₂ equals</div>
+          <div class="impact-divider"></div>
+          <div class="impact-equiv"><strong>500</strong> smartphone<br>charges</div>
+        </div>
+        <div class="impact-card glass-card reveal reveal-delay-3">
+          <div class="impact-icon">🌳</div>
+          <div class="impact-num" style="color:#a78bfa;font-family:'Space Grotesk',sans-serif;font-size:2.5rem;font-weight:800;">500 kg</div>
+          <div class="impact-unit">of CO₂ equals</div>
+          <div class="impact-divider"></div>
+          <div class="impact-equiv">Planting <strong>25 trees</strong><br>to offset</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STATISTICS ===== -->
+  <section id="stats">
+    <div class="section-header reveal" style="position:absolute;top:80px">
+      <div class="label-tag">◈ Live Metrics</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-pillar glass-card reveal reveal-delay-1">
+        <div class="stat-glow"></div>
+        <div class="stat-num" id="stat-1">500K+</div>
+        <div class="stat-label">Activities Tracked</div>
+      </div>
+      <div class="stat-pillar glass-card reveal reveal-delay-2">
+        <div class="stat-glow"></div>
+        <div class="stat-num" style="color:var(--cyan)" id="stat-2">50K+</div>
+        <div class="stat-label">Challenges Completed</div>
+      </div>
+      <div class="stat-pillar glass-card reveal reveal-delay-3">
+        <div class="stat-glow"></div>
+        <div class="stat-num" style="color:#a78bfa" id="stat-3">120 Tons</div>
+        <div class="stat-label">CO₂ Reduced</div>
+      </div>
+      <div class="stat-pillar glass-card reveal reveal-delay-4">
+        <div class="stat-glow"></div>
+        <div class="stat-num" style="color:#f59e0b" id="stat-4">25K+</div>
+        <div class="stat-label">Community Members</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CHALLENGES ===== -->
+  <section id="challenges">
+    <div class="section-header reveal">
+      <div class="label-tag">◈ Eco Missions</div>
+      <h2 class="section-h2">
+        Floating Eco-Mission<br>
+        <span class="glow-text">Challenge Center</span>
+      </h2>
+    </div>
+    <div class="challenges-grid">
+      <div class="challenge-card glass-card reveal reveal-delay-1">
+        <div class="challenge-tag">🚗 Transport</div>
+        <div class="challenge-title">No Car Friday</div>
+        <div class="challenge-desc">Replace one car trip this week with walking, cycling, or public transport.</div>
+        <div class="challenge-progress"><div class="challenge-bar" style="width:73%"></div></div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:6px">2,847 of 3,900 joined</div>
+        <button class="challenge-join" id="challenge-btn-1">Join Challenge</button>
+      </div>
+      <div class="challenge-card glass-card reveal reveal-delay-2">
+        <div class="challenge-tag">🥗 Food</div>
+        <div class="challenge-title">Green Meal Week</div>
+        <div class="challenge-desc">Choose plant-based meals for seven days and discover delicious sustainable alternatives.</div>
+        <div class="challenge-progress"><div class="challenge-bar" style="width:58%"></div></div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:6px">1,450 of 2,500 joined</div>
+        <button class="challenge-join" id="challenge-btn-2">Join Challenge</button>
+      </div>
+      <div class="challenge-card glass-card reveal reveal-delay-3">
+        <div class="challenge-tag">⚡ Energy</div>
+        <div class="challenge-title">Energy Saver Challenge</div>
+        <div class="challenge-desc">Reduce household energy usage by 10% through smart habits and efficiency improvements.</div>
+        <div class="challenge-progress"><div class="challenge-bar" style="width:85%"></div></div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:6px">4,250 of 5,000 joined</div>
+        <button class="challenge-join" id="challenge-btn-3">Join Challenge</button>
+      </div>
+      <div class="challenge-card glass-card reveal reveal-delay-4">
+        <div class="challenge-tag">🌍 Community</div>
+        <div class="challenge-title">Community Clean-Up</div>
+        <div class="challenge-desc">Participate in local sustainability efforts and connect with eco-conscious neighbors.</div>
+        <div class="challenge-progress"><div class="challenge-bar" style="width:42%"></div></div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:6px">840 of 2,000 joined</div>
+        <button class="challenge-join" id="challenge-btn-4">Join Challenge</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TESTIMONIALS ===== -->
+  <section id="testimonials">
+    <div class="section-header reveal">
+      <div class="label-tag">◈ Crystal Voices</div>
+      <h2 class="section-h2">
+        Words Floating Through<br>
+        <span class="glow-text">Atmospheric Fog</span>
+      </h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card glass-card reveal reveal-delay-1">
+        <div class="stars">★★★★★</div>
+        <div class="quote-mark">"</div>
+        <div class="testimonial-text">This platform completely changed how I think about my daily choices. The AI coach is like having a sustainability expert in my pocket 24/7.</div>
+        <div class="testimonial-author">
+          <div class="author-avatar">S</div>
+          <div>
+            <div class="author-name">Sarah Mitchell</div>
+            <div class="author-title">Reduced footprint by 23%</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card glass-card reveal reveal-delay-2">
+        <div class="stars">★★★★★</div>
+        <div class="quote-mark">"</div>
+        <div class="testimonial-text">The AI recommendations were surprisingly practical and achievable. I didn't feel overwhelmed — every suggestion fit naturally into my lifestyle.</div>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="color:var(--cyan);border-color:rgba(0,212,255,0.2);background:rgba(0,212,255,0.1)">J</div>
+          <div>
+            <div class="author-name">James Rodriguez</div>
+            <div class="author-title">Tech Entrepreneur, Berlin</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card glass-card reveal reveal-delay-3">
+        <div class="stars">★★★★★</div>
+        <div class="quote-mark">"</div>
+        <div class="testimonial-text">I reduced my footprint by 18% within two months. The community challenges kept me motivated and accountable every single week.</div>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="color:#a78bfa;border-color:rgba(167,139,250,0.2);background:rgba(167,139,250,0.1)">A</div>
+          <div>
+            <div class="author-name">Anika Patel</div>
+            <div class="author-title">Sustainable Living Blogger</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== COMMUNITY ===== -->
+  <section id="community">
+    <div class="community-content reveal">
+      <div class="label-tag">◈ Global Movement</div>
+      <h2 class="section-h2">
+        Join A Global<br>
+        <span class="glow-text">Sustainability Movement</span>
+      </h2>
+      <p class="section-sub" style="margin-top:16px">
+        Thousands of glowing nodes — each one a person choosing to make a difference.
+        Together we create measurable planetary change.
+      </p>
+    </div>
+    <!-- Animated node ecosystem -->
+    <div class="community-nodes" id="community-nodes"></div>
+    <div class="community-features reveal">
+      <div class="comm-feat">
+        <div class="comm-feat-icon">🏆</div>
+        <div class="comm-feat-text">
+          <strong>Leaderboards</strong>
+          <span>Compete with friends and global users on your CO₂ reduction journey.</span>
+        </div>
+      </div>
+      <div class="comm-feat">
+        <div class="comm-feat-icon">🌐</div>
+        <div class="comm-feat-text">
+          <strong>Community Challenges</strong>
+          <span>Join collective missions that amplify individual impact to global scale.</span>
+        </div>
+      </div>
+      <div class="comm-feat">
+        <div class="comm-feat-icon">🎯</div>
+        <div class="comm-feat-text">
+          <strong>Shared Goals</strong>
+          <span>Set community targets and celebrate when the whole group achieves them.</span>
+        </div>
+      </div>
+      <div class="comm-feat">
+        <div class="comm-feat-icon">📍</div>
+        <div class="comm-feat-text">
+          <strong>Local Eco Events</strong>
+          <span>Discover sustainability events and meet like-minded people in your city.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer id="about">
+  <div class="footer-monument">
+    <div class="footer-logo">◈ CARBON</div>
+    <div class="label-tag" style="margin-bottom:24px">🌿 Every Small Action Matters</div>
+    <h2 class="footer-h2">
+      Every Small Action<br>
+      <span class="glow-text">Creates A Bigger Impact</span>
+    </h2>
+    <p style="color:var(--text-dim);max-width:500px;margin:0 auto 40px;line-height:1.7">
+      Like a butterfly's wings creating ripples across the atmosphere,
+      your choices today shape the world of tomorrow.
+    </p>
+    <div class="footer-ctas">
+      <button class="btn-primary" id="footer-cta-1" onclick="window.location.href='dashboard.html'">🚀 Open Dashboard →</button>
+      <button class="btn-secondary" id="footer-cta-2" onclick="window.location.href='dashboard.html'">📊 Calculate My Footprint</button>
+    </div>
+  </div>
+  <nav class="footer-links" aria-label="Footer navigation">
+    <a href="#about" id="footer-about">About</a>
+    <a href="#" id="footer-privacy">Privacy</a>
+    <a href="#" id="footer-contact">Contact</a>
+    <a href="#" id="footer-resources">Resources</a>
+    <a href="#community" id="footer-community">Community</a>
+  </nav>
+  <div class="footer-bottom">
+    <p>© 2026 Carbon AI — Built for a sustainable future. 🌍</p>
+    <p style="margin-top:8px;font-size:0.72rem">
+      Inspired by the butterfly effect — small changes, infinite impact.
+    </p>
+  </div>
+</footer>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// ============================================================
+// CURSOR
+// ============================================================
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx = 0, my = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+  ring.style.left = mx + 'px'; ring.style.top = my + 'px';
+});
+document.querySelectorAll('a,button,.glass-card,.challenge-join').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '20px'; cursor.style.height = '20px';
+    ring.style.width = '60px'; ring.style.height = '60px';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '12px'; cursor.style.height = '12px';
+    ring.style.width = '40px'; ring.style.height = '40px';
+  });
+});
+
+// ============================================================
+// LOADER
+// ============================================================
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('hidden');
+  }, 2200);
+});
+
+// ============================================================
+// THREE.JS BACKGROUND — Infinite Zero-Gravity Universe
+// ============================================================
+const canvas = document.getElementById('bg-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x020810, 1);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+camera.position.z = 5;
+
+// Fog
+scene.fog = new THREE.FogExp2(0x020810, 0.035);
+
+// ---- Star field ----
+const starGeo = new THREE.BufferGeometry();
+const starCount = 3000;
+const starPos = new Float32Array(starCount * 3);
+const starColors = new Float32Array(starCount * 3);
+for (let i = 0; i < starCount; i++) {
+  starPos[i*3]   = (Math.random() - 0.5) * 200;
+  starPos[i*3+1] = (Math.random() - 0.5) * 200;
+  starPos[i*3+2] = (Math.random() - 0.5) * 200;
+  const r = Math.random();
+  if (r < 0.3) { starColors[i*3]=0.3; starColors[i*3+1]=1; starColors[i*3+2]=0.5; }
+  else if (r < 0.6) { starColors[i*3]=0.1; starColors[i*3+1]=0.8; starColors[i*3+2]=1; }
+  else { starColors[i*3]=1; starColors[i*3+1]=1; starColors[i*3+2]=1; }
+}
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+const starMat = new THREE.PointsMaterial({
+  size: 0.08, vertexColors: true, transparent: true, opacity: 0.85,
+  sizeAttenuation: true
+});
+scene.add(new THREE.Points(starGeo, starMat));
+
+// ---- Floating energy particles ----
+const eParticleGeo = new THREE.BufferGeometry();
+const epCount = 800;
+const epPos = new Float32Array(epCount * 3);
+const epVel = new Float32Array(epCount * 3);
+for (let i = 0; i < epCount; i++) {
+  epPos[i*3]   = (Math.random() - 0.5) * 40;
+  epPos[i*3+1] = (Math.random() - 0.5) * 40;
+  epPos[i*3+2] = (Math.random() - 0.5) * 40;
+  epVel[i*3]   = (Math.random() - 0.5) * 0.002;
+  epVel[i*3+1] = (Math.random() - 0.5) * 0.002;
+  epVel[i*3+2] = (Math.random() - 0.5) * 0.002;
+}
+eParticleGeo.setAttribute('position', new THREE.BufferAttribute(epPos, 3));
+const epMat = new THREE.PointsMaterial({
+  size: 0.12, color: 0x00ff88, transparent: true, opacity: 0.6,
+  sizeAttenuation: true, blending: THREE.AdditiveBlending
+});
+const eParticles = new THREE.Points(eParticleGeo, epMat);
+scene.add(eParticles);
+
+// ---- Holographic Earth sphere ----
+const earthGeo = new THREE.SphereGeometry(1.8, 64, 64);
+const earthMat = new THREE.MeshPhongMaterial({
+  color: 0x003820,
+  emissive: 0x001a0d,
+  wireframe: false,
+  transparent: true,
+  opacity: 0.0 // hidden — CSS Earth is used for hero
+});
+const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+scene.add(earthMesh);
+
+// ---- Wireframe overlay ----
+const wireGeo = new THREE.SphereGeometry(1.82, 24, 24);
+const wireMat = new THREE.MeshBasicMaterial({
+  color: 0x00ff88, wireframe: true,
+  transparent: true, opacity: 0.08
+});
+scene.add(new THREE.Mesh(wireGeo, wireMat));
+
+// ---- Orbit rings ----
+function createOrbitRing(radius, color, opacity) {
+  const ring = new THREE.RingGeometry(radius, radius + 0.01, 128);
+  const mat = new THREE.MeshBasicMaterial({
+    color, transparent: true, opacity, side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending
+  });
+  const mesh = new THREE.Mesh(ring, mat);
+  mesh.rotation.x = Math.PI / 2;
+  return mesh;
+}
+const ring1 = createOrbitRing(2.5, 0x00ff88, 0.4);
+const ring2 = createOrbitRing(3.5, 0x00d4ff, 0.25);
+const ring3 = createOrbitRing(4.8, 0x7c3aed, 0.15);
+scene.add(ring1); scene.add(ring2); scene.add(ring3);
+
+// ---- Energy ribbon ----
+const ribbonPoints = [];
+for (let i = 0; i <= 200; i++) {
+  const t = i / 200;
+  const angle = t * Math.PI * 4;
+  ribbonPoints.push(new THREE.Vector3(
+    Math.cos(angle) * (3 + Math.sin(t * Math.PI * 2) * 0.5),
+    Math.sin(t * Math.PI * 2) * 1.5,
+    Math.sin(angle) * (3 + Math.sin(t * Math.PI * 2) * 0.5)
+  ));
+}
+const ribbonGeo = new THREE.BufferGeometry().setFromPoints(ribbonPoints);
+const ribbonMat = new THREE.LineBasicMaterial({
+  color: 0x00ff88, transparent: true, opacity: 0.2,
+  blending: THREE.AdditiveBlending
+});
+scene.add(new THREE.Line(ribbonGeo, ribbonMat));
+
+// ---- Lighting ----
+scene.add(new THREE.AmbientLight(0x001a0d, 0.5));
+const greenLight = new THREE.PointLight(0x00ff88, 2, 20);
+greenLight.position.set(2, 2, 2);
+scene.add(greenLight);
+const cyanLight = new THREE.PointLight(0x00d4ff, 1.5, 15);
+cyanLight.position.set(-3, -1, 1);
+scene.add(cyanLight);
+
+// ---- Mouse parallax ----
+let targetX = 0, targetY = 0;
+document.addEventListener('mousemove', e => {
+  targetX = (e.clientX / window.innerWidth - 0.5) * 0.5;
+  targetY = (e.clientY / window.innerHeight - 0.5) * 0.3;
+});
+
+// ---- Animate ----
+let clock = new THREE.Clock();
+function animateBg() {
+  requestAnimationFrame(animateBg);
+  const t = clock.getElapsedTime();
+
+  // Rotate star field slowly
+  scene.children[0].rotation.y = t * 0.01;
+  scene.children[0].rotation.x = t * 0.005;
+
+  // Float energy particles
+  const ep = eParticleGeo.attributes.position.array;
+  for (let i = 0; i < epCount; i++) {
+    ep[i*3]   += epVel[i*3] + Math.sin(t * 0.3 + i) * 0.0005;
+    ep[i*3+1] += epVel[i*3+1] + Math.cos(t * 0.2 + i) * 0.0005;
+    ep[i*3+2] += epVel[i*3+2];
+    // Wrap
+    if (Math.abs(ep[i*3]) > 20)   ep[i*3]   *= -1;
+    if (Math.abs(ep[i*3+1]) > 20) ep[i*3+1] *= -1;
+    if (Math.abs(ep[i*3+2]) > 20) ep[i*3+2] *= -1;
+  }
+  eParticleGeo.attributes.position.needsUpdate = true;
+
+  // Rotate orbit rings
+  ring1.rotation.z = t * 0.3;
+  ring2.rotation.z = -t * 0.2;
+  ring3.rotation.z = t * 0.15;
+  ring2.rotation.x = Math.PI / 2 + Math.sin(t * 0.1) * 0.2;
+  ring3.rotation.x = Math.PI / 2 + Math.cos(t * 0.08) * 0.3;
+
+  // Pulsing lights
+  greenLight.intensity = 2 + Math.sin(t * 2) * 0.5;
+  greenLight.position.x = Math.cos(t * 0.5) * 3;
+  greenLight.position.z = Math.sin(t * 0.5) * 3;
+
+  // Camera parallax
+  camera.position.x += (targetX - camera.position.x) * 0.03;
+  camera.position.y += (-targetY - camera.position.y) * 0.03;
+  camera.lookAt(scene.position);
+
+  // Particle material pulse
+  epMat.opacity = 0.4 + Math.sin(t) * 0.2;
+
+  renderer.render(scene, camera);
+}
+animateBg();
+
+// Resize handler
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ============================================================
+// BUTTERFLY ANIMATION — Frame Sequence Player on Canvas
+// ============================================================
+const bCanvas = document.getElementById('butterfly-canvas');
+const bCtx = bCanvas.getContext('2d');
+bCanvas.width = window.innerWidth;
+bCanvas.height = window.innerHeight;
+
+const TOTAL_FRAMES = 270;
+const FRAME_PATH = 'IMGS/ezgif-frame-';
+const frames = [];
+let framesLoaded = 0;
+let currentFrame = 0;
+let butterflyX, butterflyY, butterflyW, butterflyH;
+let butterflyTargetX, butterflyTargetY;
+let bVx = 0, bVy = 0;
+
+// Butterfly position
+function resetButterfly() {
+  butterflyW = Math.min(window.innerWidth * 0.18, 280);
+  butterflyH = butterflyW * 0.65;
+  butterflyX = Math.random() * (window.innerWidth - butterflyW);
+  butterflyY = Math.random() * (window.innerHeight - butterflyH) + 60;
+  butterflyTargetX = Math.random() * (window.innerWidth - butterflyW);
+  butterflyTargetY = Math.random() * (window.innerHeight * 0.7) + 60;
+}
+
+resetButterfly();
+
+// Load frames (use a subset for performance: every 3rd frame = 90 frames)
+const loadedImages = [];
+let framesToLoad = [];
+for (let i = 1; i <= TOTAL_FRAMES; i += 3) {
+  framesToLoad.push(i);
+}
+const totalToLoad = framesToLoad.length;
+
+framesToLoad.forEach((fNum, idx) => {
+  const img = new Image();
+  const numStr = String(fNum).padStart(3, '0');
+  img.src = `IMGS/ezgif-frame-${numStr}.jpg`;
+  img.onload = () => {
+    loadedImages[idx] = img;
+    framesLoaded++;
+  };
+  img.onerror = () => { framesLoaded++; }; // skip missing
+});
+
+let bFrameIdx = 0;
+let bFrameTime = 0;
+const B_FPS = 24;
+const B_INTERVAL = 1000 / B_FPS;
+
+// Butterfly scroll behavior
+let scrollFade = 1;
+window.addEventListener('scroll', () => {
+  const sy = window.scrollY;
+  const vh = window.innerHeight;
+  // Butterfly visible in hero, fades as you scroll, reappears in different sections
+  if (sy < vh * 0.5) {
+    scrollFade = 1 - (sy / (vh * 0.5)) * 0.3;
+  } else if (sy > vh * 3) {
+    scrollFade = Math.min(1, (sy - vh * 3) / vh * 0.5);
+  } else {
+    scrollFade = 0.15;
+  }
+});
+
+let lastBTime = 0;
+let bPathTimer = 0;
+const B_PATH_CHANGE = 3000; // ms between new waypoints
+
+function drawButterfly(timestamp) {
+  // Animate frame
+  if (timestamp - lastBTime > B_INTERVAL) {
+    bFrameIdx = (bFrameIdx + 1) % totalToLoad;
+    lastBTime = timestamp;
+  }
+
+  // New waypoint periodically
+  bPathTimer += 16;
+  if (bPathTimer > B_PATH_CHANGE) {
+    bPathTimer = 0;
+    butterflyTargetX = 50 + Math.random() * (window.innerWidth - butterflyW - 100);
+    butterflyTargetY = 80 + Math.random() * (window.innerHeight * 0.65);
+  }
+
+  // Smooth movement
+  const dx = butterflyTargetX - butterflyX;
+  const dy = butterflyTargetY - butterflyY;
+  bVx += dx * 0.0005;
+  bVy += dy * 0.0005;
+  bVx *= 0.96;
+  bVy *= 0.96;
+  butterflyX += bVx;
+  butterflyY += bVy;
+
+  // Clear
+  bCtx.clearRect(0, 0, bCanvas.width, bCanvas.height);
+
+  // Draw butterfly
+  const img = loadedImages[bFrameIdx];
+  if (img && img.complete) {
+    bCtx.save();
+    bCtx.globalAlpha = scrollFade * 0.75;
+
+    // Flip direction of travel
+    if (bVx < -0.3) {
+      bCtx.translate(butterflyX + butterflyW, butterflyY);
+      bCtx.scale(-1, 1);
+      bCtx.drawImage(img, 0, 0, butterflyW, butterflyH);
+    } else {
+      bCtx.drawImage(img, butterflyX, butterflyY, butterflyW, butterflyH);
+    }
+
+    // Glow effect
+    bCtx.globalCompositeOperation = 'screen';
+    bCtx.globalAlpha = scrollFade * 0.08;
+    bCtx.shadowColor = '#00ff88';
+    bCtx.shadowBlur = 30;
+    if (bVx < -0.3) {
+      bCtx.drawImage(img, 0, 0, butterflyW, butterflyH);
+    } else {
+      bCtx.drawImage(img, butterflyX, butterflyY, butterflyW, butterflyH);
+    }
+    bCtx.restore();
+  }
+}
+
+let lastBFrame = 0;
+function bLoop(ts) {
+  requestAnimationFrame(bLoop);
+  if (ts - lastBFrame > 16) {
+    drawButterfly(ts);
+    lastBFrame = ts;
+  }
+}
+requestAnimationFrame(bLoop);
+
+window.addEventListener('resize', () => {
+  bCanvas.width = window.innerWidth;
+  bCanvas.height = window.innerHeight;
+  resetButterfly();
+});
+
+// ============================================================
+// AMBIENT PARTICLE FIELD
+// ============================================================
+(function createParticles() {
+  const field = document.getElementById('particle-field');
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'ambient-particle';
+    const size = Math.random() * 3 + 1;
+    const colors = ['rgba(0,255,136,', 'rgba(0,212,255,', 'rgba(167,139,250,', 'rgba(245,158,11,'];
+    const col = colors[Math.floor(Math.random() * colors.length)];
+    const opacity = Math.random() * 0.6 + 0.2;
+    p.style.cssText = `
+      width: ${size}px; height: ${size}px;
+      left: ${Math.random() * 100}%;
+      top: ${Math.random() * 100}%;
+      background: ${col}${opacity});
+      box-shadow: 0 0 ${size * 3}px ${col}0.5);
+      --dx: ${(Math.random() - 0.5) * 300}px;
+      --dy: ${(Math.random() - 0.5) * 300}px;
+      animation-duration: ${Math.random() * 15 + 10}s;
+      animation-delay: ${Math.random() * -15}s;
+    `;
+    field.appendChild(p);
+  }
+})();
+
+// ============================================================
+// SCROLL REVEAL
+// ============================================================
+const reveals = document.querySelectorAll('.reveal');
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+reveals.forEach(el => revealObserver.observe(el));
+
+// ============================================================
+// EARTH CORE — canvas texture animation
+// ============================================================
+(function animateEarth() {
+  const core = document.getElementById('earth-core');
+  let hue = 140;
+  setInterval(() => {
+    hue = 140 + Math.sin(Date.now() / 3000) * 10;
+    const light = 35 + Math.sin(Date.now() / 2000) * 5;
+    core.style.boxShadow = `
+      0 0 ${60 + Math.sin(Date.now()/1500)*20}px rgba(0,${200 + Math.sin(Date.now()/1000)*55},${100 + Math.sin(Date.now()/800)*55},0.7),
+      0 0 ${120 + Math.sin(Date.now()/2000)*30}px rgba(0,${180 + Math.sin(Date.now()/1200)*40},80,0.3),
+      inset 0 0 80px rgba(0,100,255,0.3)
+    `;
+  }, 50);
+})();
+
+// ============================================================
+// COMMUNITY NODES — dynamic floating ecosystem
+// ============================================================
+(function buildNodes() {
+  const container = document.getElementById('community-nodes');
+  const colors = ['#00ff88','#00d4ff','#7c3aed','#f59e0b','#ec4899'];
+  for (let i = 0; i < 40; i++) {
+    const node = document.createElement('div');
+    const size = Math.random() * 16 + 6;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const dur = (Math.random() * 8 + 6).toFixed(1);
+    const delay = -(Math.random() * 8).toFixed(1);
+    node.className = 'node';
+    node.style.cssText = `
+      width: ${size}px; height: ${size}px;
+      left: ${Math.random() * 90}%;
+      top: ${Math.random() * 80}%;
+      background: radial-gradient(circle at 35% 35%, ${color}, transparent);
+      box-shadow: 0 0 ${size}px ${color}80;
+      animation-duration: ${dur}s;
+      animation-delay: ${delay}s;
+      opacity: ${Math.random() * 0.6 + 0.4};
+    `;
+    container.appendChild(node);
+
+    // Connection lines via SVG
+  }
+  // Add SVG connection lines
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
+  for (let i = 0; i < 20; i++) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', Math.random() * 100 + '%');
+    line.setAttribute('y1', Math.random() * 100 + '%');
+    line.setAttribute('x2', Math.random() * 100 + '%');
+    line.setAttribute('y2', Math.random() * 100 + '%');
+    line.setAttribute('stroke', 'rgba(0,255,136,0.15)');
+    line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+  }
+  container.appendChild(svg);
+})();
+
+// ============================================================
+// CHAT — Animated responses
+// ============================================================
+const aiResponses = {
+  'fly': 'Flying round-trip from NYC to LA produces ~0.9 tons of CO₂. Offsetting it = planting 45 trees! ✈️🌳',
+  'car': 'An average car emits ~120g CO₂/km. Carpooling cuts that in half! 🚗',
+  'food': 'Animal products account for ~14.5% of global emissions. Every plant-based meal helps! 🌱',
+  'energy': 'Switching to LED bulbs saves ~75% energy vs incandescent. Easy win! 💡',
+  'default': 'Great question! I\'m analyzing your carbon footprint. Try describing a specific habit for personalized advice. 🤖'
+};
+
+function sendChatMsg() {
+  const inp = document.getElementById('chat-input');
+  const msgs = document.getElementById('chat-messages');
+  const val = inp.value.trim();
+  if (!val) return;
+
+  // User msg
+  const uMsg = document.createElement('div');
+  uMsg.className = 'chat-msg user';
+  uMsg.textContent = val;
+  msgs.appendChild(uMsg);
+
+  // AI response
+  setTimeout(() => {
+    const aMsg = document.createElement('div');
+    aMsg.className = 'chat-msg ai';
+    let response = aiResponses.default;
+    const lower = val.toLowerCase();
+    if (lower.includes('fly') || lower.includes('plane')) response = aiResponses.fly;
+    else if (lower.includes('car') || lower.includes('drive')) response = aiResponses.car;
+    else if (lower.includes('food') || lower.includes('eat') || lower.includes('meat')) response = aiResponses.food;
+    else if (lower.includes('energy') || lower.includes('electricity')) response = aiResponses.energy;
+    aMsg.innerHTML = `<div class="ai-tag">Carbon AI</div>${response}`;
+    msgs.appendChild(aMsg);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 800);
+
+  inp.value = '';
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChatMsg();
+});
+
+// ============================================================
+// CHALLENGE BUTTONS
+// ============================================================
+document.querySelectorAll('.challenge-join').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.textContent = '✓ Joined!';
+    btn.style.background = 'rgba(0,255,136,0.15)';
+    btn.style.color = '#00ff88';
+    btn.style.boxShadow = '0 0 20px rgba(0,255,136,0.4)';
+  });
+});
+
+// ============================================================
+// SMOOTH SCROLL PARALLAX ON SCROLL
+// ============================================================
+let scrollY = 0;
+window.addEventListener('scroll', () => {
+  scrollY = window.scrollY;
+  // Move bg canvas elements based on scroll
+  const parallaxOffset = scrollY * 0.02;
+  eParticles.rotation.y = parallaxOffset;
+  ring1.rotation.z = parallaxOffset * 2;
+});
+
+// ============================================================
+// STATS COUNTER ANIMATION
+// ============================================================
+function animateCounter(el, target, suffix) {
+  let start = 0;
+  const duration = 2000;
+  const step = timestamp => {
+    if (!start) start = timestamp;
+    const prog = Math.min((timestamp - start) / duration, 1);
+    const val = Math.floor(prog * target);
+    el.textContent = val.toLocaleString() + suffix;
+    if (prog < 1) requestAnimationFrame(step);
+    else el.textContent = target.toLocaleString() + suffix;
+  };
+  requestAnimationFrame(step);
+}
+
+const statsObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      animateCounter(document.getElementById('stat-1'), 500000, '+');
+      animateCounter(document.getElementById('stat-2'), 50000, '+');
+      statsObserver.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+statsObserver.observe(document.getElementById('stats'));
+
+// ============================================================
+// MOUSE PARALLAX ON CARDS
+// ============================================================
+document.querySelectorAll('.glass-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 12;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 12;
+    card.style.transform = `perspective(800px) rotateY(${x}deg) rotateX(${-y}deg) translateY(-8px) scale(1.01)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
+
+console.log('🌍 Carbon AI Platform — Zero-Gravity Universe Initialized ✨');
+</script>
+</body>
+</html>
