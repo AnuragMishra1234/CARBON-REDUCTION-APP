@@ -14,8 +14,24 @@ connectDB();
 // ── Security Middleware ────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
+// ── CORS allowed origins ──────────────────────────────────────
+const ALLOWED_ORIGINS = [
+  process.env.CLIENT_URL || 'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:8080'
+];
+
 app.use(cors({
-  origin: [process.env.CLIENT_URL || 'http://localhost:5173', 'http://localhost:3000', 'http://localhost:8080'],
+  origin: (origin, callback) => {
+    // Allow server-to-server calls (no origin) and listed origins
+    if (!origin) return callback(null, true);
+    const isAllowed =
+      ALLOWED_ORIGINS.includes(origin) ||
+      /\.vercel\.app$/.test(origin) ||   // allow all Vercel preview URLs
+      /\.onrender\.com$/.test(origin);   // allow Render internal calls
+    if (isAllowed) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -44,9 +60,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ── Logging ────────────────────────────────────────────────
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-}
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ── Health Check ───────────────────────────────────────────
 app.get('/api/health', (req, res) => {

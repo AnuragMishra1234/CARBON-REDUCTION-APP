@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import axios from 'axios'
+import api from '../lib/api'
 
 const STEPS = [
   {
@@ -55,7 +55,7 @@ export default function FootprintQuiz() {
 
   const calculateResult = async () => {
     try {
-      const { data } = await axios.post('/api/auth/onboarding', { quizAnswers: answers, goalTarget: 3.2 * (1 - 0.1) })
+      const { data } = await api.post('/api/auth/onboarding', { quizAnswers: answers, goalTarget: 3.2 * (1 - 0.1) })
       setEstimated(data.estimatedFootprint)
       updateUser({ onboardingCompleted: true, currentFootprint: data.estimatedFootprint })
     } catch {
@@ -67,7 +67,7 @@ export default function FootprintQuiz() {
   const generatePlan = async () => {
     setLoading(true)
     try {
-      await axios.post('/api/auth/onboarding', { quizAnswers: answers, goalTarget: Math.round(estimated * (1 - goalPct) * 100) / 100 })
+      await api.post('/api/auth/onboarding', { quizAnswers: answers, goalTarget: Math.round(estimated * (1 - goalPct) * 100) / 100 })
       toast.success('Your sustainability plan is ready! 🌿')
       navigate('/dashboard/ai')
     } catch {

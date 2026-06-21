@@ -1,18 +1,22 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment variables – NEVER commit these
 .env
 .env.local
 .env.development
 .env.production
 
-# Build files
+# But DO commit the examples (no secrets in them)
+!.env.example
+
+# Build output
 dist/
 build/
 
 # Logs
 *.log
+npm-debug.log*
 
 # OS files
 .DS_Store
@@ -20,3 +24,7 @@ Thumbs.db
 
 # Vercel
 .vercel/
+
+# Editor
+.vscode/
+.idea/

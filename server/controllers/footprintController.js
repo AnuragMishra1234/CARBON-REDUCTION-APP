@@ -11,7 +11,7 @@ exports.calculate = async (req, res, next) => {
     const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
 
     const agg = await Activity.aggregate([
-      { $match: { userId: req.user._id, date: { $gte: thirtyDaysAgo } } },
+      { $match: { userId: req.userId, date: { $gte: thirtyDaysAgo } } },
       { $group: { _id: null, total: { $sum: '$emissionValue' }, count: { $sum: 1 } } }
     ]);
 
@@ -74,7 +74,7 @@ exports.getMonthly = async (req, res, next) => {
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
     const raw = await Activity.aggregate([
-      { $match: { userId: req.user._id, date: { $gte: oneYearAgo } } },
+      { $match: { userId: req.userId, date: { $gte: oneYearAgo } } },
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m', date: '$date' } },

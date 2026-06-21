@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import axios from 'axios'
+import api from '../lib/api'
 
 const Toggle = ({ checked, onChange, label, desc }) => (
   <div className="flex items-center justify-between py-3 border-b border-white/[0.05] last:border-0">
@@ -33,7 +33,7 @@ export default function Settings() {
   const save = async () => {
     setSaving(true)
     try {
-      const { data } = await axios.put('/api/auth/profile', form)
+      const { data } = await api.put('/api/auth/profile', form)
       updateUser(data.user)
       toast.success('Profile updated! ✓')
     } catch { toast.error('Failed to save settings') }

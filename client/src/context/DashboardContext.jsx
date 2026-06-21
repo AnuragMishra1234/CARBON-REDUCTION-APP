@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import api from '../lib/api'
 import { useAuth } from './AuthContext'
 
 const DashboardContext = createContext(null)
@@ -26,9 +26,9 @@ export const DashboardProvider = ({ children }) => {
   const fetchFootprint = useCallback(async () => {
     try {
       const [fp, bd, wk] = await Promise.all([
-        axios.get('/api/footprint/calculate'),
-        axios.get('/api/footprint/breakdown'),
-        axios.get('/api/footprint/weekly')
+        api.get('/api/footprint/calculate'),
+        api.get('/api/footprint/breakdown'),
+        api.get('/api/footprint/weekly')
       ])
       update({ footprint: fp.data, breakdown: bd.data.breakdown, weekly: wk.data.weekly })
     } catch {}
@@ -36,15 +36,15 @@ export const DashboardProvider = ({ children }) => {
 
   const fetchActivities = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/activity/history?limit=30')
-      const daily    = await axios.get('/api/activity/daily')
+      const { data } = await api.get('/api/activity/history?limit=30')
+      const daily    = await api.get('/api/activity/daily')
       update({ activities: data.activities, dailyLog: daily.data })
     } catch {}
   }, [])
 
   const fetchChallenges = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/challenges')
+      const { data } = await api.get('/api/challenges')
       update({ challenges: data.challenges, challengesLoaded: true })
     } catch {
       update({ challengesLoaded: true }) // still mark loaded so we know API was tried
@@ -53,7 +53,7 @@ export const DashboardProvider = ({ children }) => {
 
   const fetchLeaderboard = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/community/leaderboard')
+      const { data } = await api.get('/api/community/leaderboard')
       update({ leaderboard: data.leaderboard, myRank: data.myRank })
     } catch {}
   }, [])
@@ -61,8 +61,8 @@ export const DashboardProvider = ({ children }) => {
   const fetchCommunity = useCallback(async () => {
     try {
       const [stats, feed] = await Promise.all([
-        axios.get('/api/community/stats'),
-        axios.get('/api/community/feed')
+        api.get('/api/community/stats'),
+        api.get('/api/community/feed')
       ])
       update({ communityStats: stats.data, feed: feed.data.feed })
     } catch {}
@@ -70,13 +70,13 @@ export const DashboardProvider = ({ children }) => {
 
   const fetchGoals = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/goals')
+      const { data } = await api.get('/api/goals')
       update({ goals: data.goals })
     } catch {}
   }, [])
 
   const logActivity = useCallback(async (activityData) => {
-    const { data } = await axios.post('/api/activity/log', activityData)
+    const { data } = await api.post('/api/activity/log', activityData)
     // Refresh footprint and activities after logging
     await Promise.all([fetchFootprint(), fetchActivities()])
     return data

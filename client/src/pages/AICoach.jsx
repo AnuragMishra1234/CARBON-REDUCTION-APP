@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useDashboard } from '../context/DashboardContext'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
-import axios from 'axios'
+import api from '../lib/api'
 
 const QUICK_PROMPTS = [
   '💡 What is my biggest emission source?',
@@ -46,7 +46,7 @@ export default function AICoach() {
     setLoading(true)
     try {
       const history = messages.filter(m => m.role !== 'system').slice(-6)
-      const { data } = await axios.post('/api/ai/chat', { message: text, history })
+      const { data } = await api.post('/api/ai/chat', { message: text, history })
       console.log('[Carbon AI]', data.groq ? '✅ GROQ live' : '⚡ Smart fallback', data.model || '')
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply, isGroq: !!data.groq }])
     } catch (err) {
@@ -58,7 +58,7 @@ export default function AICoach() {
   const generatePlan = async () => {
     setLoading(true)
     try {
-      const { data } = await axios.post('/api/ai/generate-plan')
+      const { data } = await api.post('/api/ai/generate-plan')
       setPlan(data.plan)
       toast.success('7-day action plan ready! 🌿')
     } catch {
@@ -68,7 +68,7 @@ export default function AICoach() {
 
   const loadRecs = async () => {
     try {
-      const { data } = await axios.post('/api/ai/recommendations')
+      const { data } = await api.post('/api/ai/recommendations')
       setRecs(data.recommendations)
       toast.success('Recommendations updated! 🎯')
     } catch {}

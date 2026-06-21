@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useDashboard } from '../context/DashboardContext'
 import toast from 'react-hot-toast'
-import axios from 'axios'
+import api from '../lib/api'
 
 const DEMO_CHALLENGES = [
   { _id: '1', icon: '🚲', title: 'No Car Friday', category: 'transport', difficulty: 'easy', rewardPoints: 150, description: 'Replace at least one car trip with walking, cycling, or public transport.', co2SavedEstimate: 4.2, participantCount: 1247, isJoined: false, myProgress: 0 },
@@ -46,7 +46,7 @@ export default function Challenges() {
       return
     }
     try {
-      await axios.post(`/api/challenges/join/${id}`)
+      await api.post(`/api/challenges/join/${id}`)
       toast.success('Challenge joined! 🌱 Good luck!')
       fetchChallenges()
     } catch (err) {

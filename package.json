@@ -3,10 +3,15 @@
   "version": "1.0.0",
   "description": "Carbon AI — Full-Stack Sustainability Platform",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "install:all":  "cd server && npm install && cd ../client && npm install",
-    "dev:server":   "cd server && npm run dev",
-    "dev:client":   "cd client && npm run dev",
-    "seed":         "cd server && node seed/seedData.js"
+    "install:all":   "cd server && npm install && cd ../client && npm install",
+    "dev:server":    "cd server && npm run dev",
+    "dev:client":    "cd client && npm run dev",
+    "build":         "cd client && npm install && npm run build",
+    "start":         "cd server && npm start",
+    "seed":          "cd server && node seed/seedData.js"
   }
 }

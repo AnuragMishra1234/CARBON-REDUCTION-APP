@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import api from '../lib/api'
 import toast from 'react-hot-toast'
 
 const AuthContext = createContext(null)
@@ -10,10 +10,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading]         = useState(true)
   const [isAuthenticated, setIsAuth]  = useState(false)
 
-  // Set axios default auth header
+  // Token is handled automatically by api.js interceptor
+  // This function is kept for backward compatibility
   const setAxiosToken = (t) => {
-    if (t) axios.defaults.headers.common['Authorization'] = `Bearer ${t}`
-    else delete axios.defaults.headers.common['Authorization']
+    // The interceptor in lib/api.js reads from localStorage directly
   }
 
   // Validate token on mount
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
       if (!saved) { setLoading(false); return }
       setAxiosToken(saved)
       try {
-        const { data } = await axios.get('/api/auth/profile')
+        const { data } = await api.get('/api/auth/profile')
         setUser(data.user)
         setToken(saved)
         setIsAuth(true)
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = useCallback(async (email, password) => {
-    const { data } = await axios.post('/api/auth/login', { email, password })
+    const { data } = await api.post('/api/auth/login', { email, password })
     localStorage.setItem('carbon_token', data.token)
     setAxiosToken(data.token)
     setToken(data.token)
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const register = useCallback(async (formData) => {
-    const { data } = await axios.post('/api/auth/register', formData)
+    const { data } = await api.post('/api/auth/register', formData)
     localStorage.setItem('carbon_token', data.token)
     setAxiosToken(data.token)
     setToken(data.token)
@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshUser = useCallback(async () => {
     try {
-      const { data } = await axios.get('/api/auth/profile')
+      const { data } = await api.get('/api/auth/profile')
       setUser(data.user)
     } catch {}
   }, [])

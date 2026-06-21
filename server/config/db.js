@@ -9,8 +9,8 @@ const connectDB = async () => {
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error('❌ MongoDB Connection Failed:', error.message);
-    console.error('💡 Check your MONGODB_URI in .env file');
-    process.exit(1);
+    console.error('💡 Retrying in 5 seconds...');
+    setTimeout(() => connectDB(), 5000);
   }
 };
 
