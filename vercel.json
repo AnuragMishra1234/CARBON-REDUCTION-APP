@@ -1,10 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "npm install && npm run build",
-  "outputDirectory": "client/dist",
-  "installCommand": "npm install",
-  "framework": null,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "comment": "Frontend config is in client/vercel.json. This file is intentionally minimal.",
+  "rewrites": []
 }
